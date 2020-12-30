@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<asmv1:assembly xsi:schemaLocation="urn:schemas-microsoft-com:asm.v1 assembly.adaptive.xsd" manifestVersion="1.0" xmlns:asmv1="urn:schemas-microsoft-com:asm.v1" xmlns="urn:schemas-microsoft-com:asm.v2" xmlns:asmv2="urn:schemas-microsoft-com:asm.v2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:co.v1="urn:schemas-microsoft-com:clickonce.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" xmlns:dsig="http://www.w3.org/2000/09/xmldsig#" xmlns:co.v2="urn:schemas-microsoft-com:clickonce.v2">
+  <asmv1:assemblyIdentity name="FixHistories.exe" version="1.0.0.1" publicKeyToken="60ec9ea793f47005" language="neutral" processorArchitecture="msil" type="win32" />
+  <application />
+  <entryPoint>
+    <assemblyIdentity name="FixHistories" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+    <commandLine file="FixHistories.exe" parameters="" />
+  </entryPoint>
+  <trustInfo>
+    <security>
+      <applicationRequestMinimum>
+        <PermissionSet Unrestricted="true" ID="Custom" SameSite="site" />
+        <defaultAssemblyRequest permissionSetReference="Custom" />
+      </applicationRequestMinimum>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <!--
+          UAC Manifest Options
+          If you want to change the Windows User Account Control level replace the
+          requestedExecutionLevel node with one of the following.
+
+        <requestedExecutionLevel  level="asInvoker" uiAccess="false" />
+        <requestedExecutionLevel  level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel  level="highestAvailable" uiAccess="false" />
+
+         If you want to utilize File and Registry Virtualization for backward
+         compatibility then delete the requestedExecutionLevel node.
+    -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+  <dependency>
+    <dependentOS>
+      <osVersionInfo>
+        <os majorVersion="5" minorVersion="1" buildNumber="2600" servicePackMajor="0" />
+      </osVersionInfo>
+    </dependentOS>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="preRequisite" allowDelayedBinding="true">
+      <assemblyIdentity name="Microsoft.Windows.CommonLanguageRuntime" version="4.0.30319.0" />
+    </dependentAssembly>
+  </dependency>
+  <dependency>
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="FixHistories.exe" size="13272">
+      <assemblyIdentity name="FixHistories" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
+      <hash>
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+        <dsig:DigestValue>dhUC9djBSahuXOjRyC1sQwkuieIKKMdcbwX1uFzDRDo=</dsig:DigestValue>
+      </hash>
+    </dependentAssembly>
+  </dependency>
+  <file name="FixHistories.exe.config" size="186">
+    <hash>
+      <dsig:Transforms>
+        <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
+      </dsig:Transforms>
+      <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
+      <dsig:DigestValue>1NgAxCSw4ibTXzWVy7D6Rw60Qih4Dn37KvGhG5Ora/s=</dsig:DigestValue>
+    </hash>
+  </file>
+<publisherIdentity name="CN=GCFSURFACEBOOK\greig" issuerKeyHash="4e2282201d32451af2ceb77fc5474e8e8a119ba4" /><Signature Id="StrongNameSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>MrrT5LrFdGCLqqyFuQtM61I8zFW0HmJS76jUb+KgOUU=</DigestValue></Reference></SignedInfo><SignatureValue>s5ageuxzc5mQRQe9ZBYVZBeW4B2yLtRl/ElPtlbsHodNgXscbUBUOLDKpCaDYm3zaPjYrpuMSeJqkG8k6bLrwJ8oJ/l06oAaBWOW8+GqIdCgMZO8/grVa8M052mvXPbBgBZsSwHsqQjYCMRkvMiFNM+O8Ywlmq4aomIApPBgcMw=</SignatureValue><KeyInfo Id="StrongNameKeyInfo"><KeyValue><RSAKeyValue><Modulus>+vUNKmWkGAmaFVKBRAg6C/P/o9Pg//+f+1wJ/QXHF9YBWSC6dvEN5M0wiavWlPXZmgu7PxsMIWCGxWpx/TFiX30h2i1KTBvdormIkrjYUyR4hQ6rJG8Q10c/TW4chrwMO20BxYfGgbv06ca8AuaeqWpB4uvUjxwjyh4p5Cz8GqU=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><msrel:RelData xmlns:msrel="http://schemas.microsoft.com/windows/rel/2005/reldata"><r:license xmlns:r="urn:mpeg:mpeg21:2003:01-REL-R-NS" xmlns:as="http://schemas.microsoft.com/windows/pki/2005/Authenticode"><r:grant><as:ManifestInformation Hash="4539a0e26fd4a8ef52621eb455cc3c52eb4c0bb985acaa8b6074c5bae4d3ba32" Description="" Url=""><as:assemblyIdentity name="FixHistories.exe" version="1.0.0.1" publicKeyToken="60ec9ea793f47005" language="neutral" processorArchitecture="msil" type="win32" /></as:ManifestInformation><as:SignedBy /><as:AuthenticodePublisher><as:X509SubjectName>CN=GCFSURFACEBOOK\greig</as:X509SubjectName></as:AuthenticodePublisher></r:grant><r:issuer><Signature Id="AuthenticodeSignature" xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha256" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /><Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" /><DigestValue>U/gH51MQIoISgKWkDJ6jS0nC3XDi9QvLnuxIuvU3hsY=</DigestValue></Reference></SignedInfo><SignatureValue>ewtI770q9kdT5l19479mPzIP1kQlz8K+bBRoM9nBzXLf7eSDok6n35HL1zPyf9Xj8XJdqh/FCcgW97jei49qwrLAI80XOShcD6KhjMhykw23VtAa8sy7KApE/NQd//YYDmURmBrFDsLCi/BQ3mUDhS6aeZWJ7uNzspx9glxCNuk=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>+vUNKmWkGAmaFVKBRAg6C/P/o9Pg//+f+1wJ/QXHF9YBWSC6dvEN5M0wiavWlPXZmgu7PxsMIWCGxWpx/TFiX30h2i1KTBvdormIkrjYUyR4hQ6rJG8Q10c/TW4chrwMO20BxYfGgbv06ca8AuaeqWpB4uvUjxwjyh4p5Cz8GqU=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509Certificate>MIIB6TCCAVKgAwIBAgIQYiSuy40lh6lPbw5KdXFiYzANBgkqhkiG9w0BAQsFADAzMTEwLwYDVQQDHigARwBDAEYAUwBVAFIARgBBAEMARQBCAE8ATwBLAFwAZwByAGUAaQBnMB4XDTIwMDIxNTE1NTIyM1oXDTIxMDIxNDIxNTIyM1owMzExMC8GA1UEAx4oAEcAQwBGAFMAVQBSAEYAQQBDAEUAQgBPAE8ASwBcAGcAcgBlAGkAZzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA+vUNKmWkGAmaFVKBRAg6C/P/o9Pg//+f+1wJ/QXHF9YBWSC6dvEN5M0wiavWlPXZmgu7PxsMIWCGxWpx/TFiX30h2i1KTBvdormIkrjYUyR4hQ6rJG8Q10c/TW4chrwMO20BxYfGgbv06ca8AuaeqWpB4uvUjxwjyh4p5Cz8GqUCAwEAATANBgkqhkiG9w0BAQsFAAOBgQA2YHLp8tMGtcMk/HM4gIc3iweTelxklnXHTuw+fQg+jC20byX4QIr46bnlRLxUjQEb/GShK07I7Qj0us0h35RG24zpvAL6/TyAcfPU3XLNoBB036zHL6TVpJo772Hp89uN3ToUa2Hn0Ka3Aq/EDgBRautSXSnI+dTNKwjFp0o7mg==</X509Certificate></X509Data></KeyInfo></Signature></r:issuer></r:license></msrel:RelData></KeyInfo></Signature></asmv1:assembly>
