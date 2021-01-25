@@ -109,7 +109,8 @@ namespace FixHistories
             //                tbDirectoryName.Text + tbWorkItemsFileName.Text
             lbFileList.Items.Clear();
             for (int i = 0; i < InputFileNames.Length; i++)
-                lbFileList.Items.Add(InputFileNames[i].Substring(InputFileNames[i].LastIndexOf("\\") + 1));
+                lbFileList.Items.Add(InputFileNames[i]);
+            //lbFileList.Items.Add(InputFileNames[i].Substring(InputFileNames[i].LastIndexOf("\\") + 1));
             return;
 
         }
@@ -124,6 +125,11 @@ namespace FixHistories
             if (InputFileNames.Length < 2)
             {
                 MessageBox.Show("Please select 2 or more files first");
+                return;
+            }
+            if(Histories == null)
+            {
+                MessageBox.Show("Please load & merge files first");
                 return;
             }
             if (Histories.Length < 2)
@@ -369,60 +375,67 @@ namespace FixHistories
                 HistoriesDumpParser.TextFieldType = FieldType.Delimited;
                 HistoriesDumpParser.SetDelimiters(",");
                 //while (sr.EndOfStream != true)
-
+                
                 while (HistoriesDumpParser.EndOfData != true)
                 {
                     // inputline = sr.ReadLine();
                     inputline = HistoriesDumpParser.PeekChars(8000);
-
-
-                    string[] pline = HistoriesDumpParser.ReadFields();
-
-                    if (numRecs >= 1 && inputline.Length > 12 && inputline.Substring(0, 11).CompareTo("Change Date") != 0) // Strip Headers
+                    string[] pline = new string[0];
+                    try
                     {
-
-                        //SBR.AppendLine(inputline);
-                        if ((numRecs + 1) >= Histories.Length)
-                            Array.Resize(ref Histories, Histories.Length + 100000);
-                        //Array.Resize(ref Histories, numRecs + 1);
-                        if (DateTime.TryParse(inputline.Substring(0, inputline.IndexOf(",", 0)), out DateTime result) == true)
+                        pline = HistoriesDumpParser.ReadFields();
+                    }
+                    catch
+                    {
+                        Array.Resize(ref pline, 0);
+                    }
+                    if (pline.Length > 0)
+                    {
+                        if (numRecs >= 1 && inputline.Length > 12 && inputline.Substring(0, 11).CompareTo("Change Date") != 0) // Strip Headers
                         {
-                            DateTime.TryParse(pline[0],out result);
-                            Histories[numRecs].ChangeDate = result;
-                            Histories[numRecs].ID = pline[2];
-                            DateTime.TryParse(pline[10], out result);
-                            Histories[numRecs].LastModified = result;
+
+                            //SBR.AppendLine(inputline);
+                            if ((numRecs + 1) >= Histories.Length)
+                                Array.Resize(ref Histories, Histories.Length + 100000);
+                            //Array.Resize(ref Histories, numRecs + 1);
+                            if (DateTime.TryParse(inputline.Substring(0, inputline.IndexOf(",", 0)), out DateTime result) == true)
+                            {
+                                DateTime.TryParse(pline[0], out result);
+                                Histories[numRecs].ChangeDate = result;
+                                Histories[numRecs].ID = pline[2];
+                                DateTime.TryParse(pline[10], out result);
+                                Histories[numRecs].LastModified = result;
+                                Histories[numRecs].Contents = inputline;
+                                numRecs++;
+                            }
+                            else
+                            {
+                                Histories[numRecs - 1].Contents += inputline;
+                            }
+
+                        }
+                        else if (numRecs <= 1)
+                        {
+                            if (numRecs == 0 && inputline.Substring(0, 11).CompareTo("Change Date") == 0)
+                            {
+                                HistoryHeaders = inputline;
+                            }
+                            //Array.Resize(ref Histories, numRecs + 1);
+                            if (numRecs != 0)
+                            {
+                                DateTime.TryParse(pline[0], out DateTime result);
+                                Histories[numRecs].ChangeDate = result;
+                                Histories[numRecs].ID = pline[2];
+                                DateTime.TryParse(pline[10], out result);
+                                Histories[numRecs].LastModified = result;
+                                Histories[numRecs].Contents = inputline;
+                                Histories[numRecs].ID = "0";
+                            }
+                            //SBR.AppendLine(inputline);
                             Histories[numRecs].Contents = inputline;
                             numRecs++;
                         }
-                        else
-                        {
-                            Histories[numRecs - 1].Contents += inputline;
-                        }
-
                     }
-                    else if (numRecs <= 1)
-                    {
-                        if (numRecs == 0 && inputline.Substring(0, 11).CompareTo("Change Date") == 0)
-                        {
-                            HistoryHeaders = inputline;
-                        }
-                        //Array.Resize(ref Histories, numRecs + 1);
-                        if (numRecs != 0)
-                        {
-                            DateTime.TryParse(pline[0], out DateTime result);
-                            Histories[numRecs].ChangeDate = result;
-                            Histories[numRecs].ID = pline[2];
-                            DateTime.TryParse(pline[10], out result);
-                            Histories[numRecs].LastModified = result;
-                            Histories[numRecs].Contents = inputline;
-                            Histories[numRecs].ID = "0";
-                        }
-                        //SBR.AppendLine(inputline);
-                        Histories[numRecs].Contents = inputline;
-                        numRecs++;
-                    }
-
                 }
                 //FS.Close();
                 HistoriesDumpParser.Close();
@@ -490,7 +503,7 @@ namespace FixHistories
 
             if((EndRec - StartRec) <= MaxRecs)
             {
-                MessageBox.Show("Current Number of Records " + (EndRec - StartRec) + " is less than Max " + MaxRecs);
+                MessageBox.Show("Number of Records " + (EndRec - StartRec) + " is less than Max " + MaxRecs);
                 return;
             }
             dtpStartDate.Value = SortedHistories[(EndRec - MaxRecs)].ChangeDate.AddDays(1);
@@ -532,64 +545,143 @@ namespace FixHistories
             FileStream FS = File.OpenRead(InputFileNames[0]);
             BinaryReader sr = new BinaryReader(FS);
             int xx = sr.Read(inputline, 0, 2);
-            if (xx < 2 || inputline[0] != 255 || inputline[1] != 254)
+            
+
+            if (!(xx == 2 && inputline[0] == 255 && inputline[1] == 254))
             {
-                MessageBox.Show("File not 16 Bit UCode File");
+                SFileDialog = new SaveFileDialog();
+                SFileDialog.Title = "Open CSV File";
+                SFileDialog.Filter = "CSV files|*.csv";
+                SFileDialog.CheckPathExists = false;
+                SFileDialog.InitialDirectory = tbDirectory.Text;
+                SFileDialog.ShowDialog();
+                if (SFileDialog.FileName == "")
+                {
+                    MessageBox.Show("Cancelled");
+                    return;
+                }
                 FS.Close();
-                return;
-            }
-            SFileDialog = new SaveFileDialog();
-            SFileDialog.Title = "Open CSV File";
-            SFileDialog.Filter = "CSV files|*.csv";
-            SFileDialog.CheckPathExists = false;
-            SFileDialog.InitialDirectory = tbDirectory.Text;
-            SFileDialog.ShowDialog();
-            if (SFileDialog.FileName == "")
-            {
-                MessageBox.Show("Cancelled");
-                return;
-            }
-            FileStream OFS = File.OpenWrite(SFileDialog.FileName);
-            OFS.SetLength(0);
-            OFS.Seek(0, SeekOrigin.Begin);
-            BinaryWriter OSR = new BinaryWriter(OFS);
-            OSR.Write(inputline, 0, 2);
-            while (true)
-            {
-               
-                int bts = sr.Read(inputline, 0, 4096);
-                if(inputline[0] != 255 || inputline[1] !=254)
-                if (bts <= 0)
-                    break;
-                byte[] obuf = new byte[bts];
-                int numobuf = 0;
-                for (int i = 0; i < bts; i++)
+                sr.Close();
+                FS = File.OpenRead(InputFileNames[0]);
+                sr = new BinaryReader(FS);
+                
+                FileStream OFS = File.OpenWrite(SFileDialog.FileName);
+                OFS.SetLength(0);
+                OFS.Seek(0, SeekOrigin.Begin);
+                BinaryWriter OSR = new BinaryWriter(OFS);
+                //OSR.Write(inputline, 0, 2);
+                while (true)
                 {
 
-
-
-                    if (inputline[i] == 61 && i < (bts-2) && inputline[i + 2] == 64)
+                    int bts = sr.Read(inputline, 0, 4096);
+                    //if (inputline[0] != 255 || inputline[1] != 254)
+                    if (bts <= 0)
+                        break;
+                    byte[] obuf = new byte[bts];
+                    int numobuf = 0;
+                    for (int i = 0; i < bts; i++)
                     {
-                        changes++; // 16bit encoding?
-                        i += 3;
+
+                        //byte[] lbuf = new byte[5];
+                        //if((bts - i) > 6)
+                        //{
+                        //    for (int ll = 0; ll < 5; ll++)
+                        //        lbuf[ll] = inputline[ll+i];
+                        //}
+                        //if (inputline[i] == 61 && i < (bts - 2) && (inputline[i + 1] == Convert.ToByte(45) || inputline[i + 2] == Convert.ToByte(45)))
+                        //  i = i;
+                        //if (inputline[i] == Convert.ToByte(61) && i < (bts - 5))
+                        //{
+                        //    if (inputline[i + 1] == Convert.ToByte(45) || inputline[i + 2] == 45 || inputline[i + 3] == 45 || inputline[i + 4] == 45 || inputline[i + 5] == 45)
+                        //        i = i;
+                        //}
+                       
+                        if (inputline[i] == 61 && i < (bts - 2) && inputline[i + 1] == 64)  // =@
+                        {
+                            changes++; // 16bit encoding?
+                            i += 2;
+                        }
+                        else if (inputline[i] == 44 && i < (bts - 2) && inputline[i + 1] == 45) // ,-
+                        {
+                            changes++; // 16bit encoding?
+                            i += 2;
+                        }
+                        else
+                        {
+                            obuf[numobuf] = inputline[i];
+                            numobuf++;
+                        }
                     }
-                    else
-                    {
-                        obuf[numobuf] = inputline[i];
-                        numobuf++;
-                    }
+                    numBytes += numobuf;
+                    OSR.Write(obuf, 0, numobuf);
                 }
-                numBytes += numobuf;
-                OSR.Write(obuf,0,numobuf);
-            }
 
-            OSR.Flush();
-            OFS.Flush(true);
-            OSR.Dispose();
-            OFS.Close();
-            OFS.Dispose();
-            FS.Close();
-           
+                OSR.Flush();
+                OFS.Flush(true);
+                OSR.Dispose();
+                OFS.Close();
+                OFS.Dispose();
+                FS.Close();
+            }
+            else
+            {
+                SFileDialog = new SaveFileDialog();
+                SFileDialog.Title = "Open CSV File";
+                SFileDialog.Filter = "CSV files|*.csv";
+                SFileDialog.CheckPathExists = false;
+                SFileDialog.InitialDirectory = tbDirectory.Text;
+                SFileDialog.ShowDialog();
+                if (SFileDialog.FileName == "")
+                {
+                    MessageBox.Show("Cancelled");
+                    return;
+                }
+                FileStream OFS = File.OpenWrite(SFileDialog.FileName);
+                OFS.SetLength(0);
+                OFS.Seek(0, SeekOrigin.Begin);
+                BinaryWriter OSR = new BinaryWriter(OFS);
+                OSR.Write(inputline, 0, 2);
+                while (true)
+                {
+
+                    int bts = sr.Read(inputline, 0, 4096);
+                    if (inputline[0] != 255 || inputline[1] != 254)
+                        if (bts <= 0)
+                            break;
+                    byte[] obuf = new byte[bts];
+                    int numobuf = 0;
+                    for (int i = 0; i < bts; i++)
+                    {
+
+
+
+                        if (inputline[i] == 61 && i < (bts - 2) && inputline[i + 2] == 64)  // =@
+                        {
+                            changes++; // 16bit encoding?
+                            i += 3;
+                        }
+                        else if (inputline[i] == 61 && i < (bts - 2) && inputline[i + 2] == 45) // =-
+                        {
+                            changes++; // 16bit encoding?
+                            i += 3;
+                        }
+                        else
+                        {
+                            obuf[numobuf] = inputline[i];
+                            numobuf++;
+                        }
+                    }
+                    numBytes += numobuf;
+                    OSR.Write(obuf, 0, numobuf);
+                }
+
+                OSR.Flush();
+                OFS.Flush(true);
+                OSR.Dispose();
+                OFS.Close();
+                OFS.Dispose();
+                FS.Close();
+            }
             trd.Abort();
             lblNumberOfRecords.Text = "Number of Changes: " + changes + " Number of Bytes " + numBytes;
             MessageBox.Show("Wrote Number of Changes: " + changes + " Number of Bytes " + numBytes);
@@ -599,6 +691,166 @@ namespace FixHistories
         {
 
            
+        }
+
+        private void LoadAndConcat_Click(object sender, EventArgs e)
+        {
+            if (InputFileNames.Length <2)
+            {
+                MessageBox.Show("Please select multiple files to concatenate");
+                return;
+            }
+
+            Thread trd = new Thread(new ThreadStart(this.ThreadTask));
+            trd.IsBackground = true;
+            trd.Start();
+            int numBytes = 0;
+
+
+
+            SFileDialog = new SaveFileDialog();
+            SFileDialog.Title = "Open CSV File";
+            SFileDialog.Filter = "CSV files|*.csv";
+            SFileDialog.CheckPathExists = false;
+            SFileDialog.InitialDirectory = tbDirectory.Text;
+            SFileDialog.ShowDialog();
+            if (SFileDialog.FileName.Length == 0)
+            {
+                MessageBox.Show("Cancelled");
+                trd.Abort();
+                return;
+            }
+            FileStream OFS = File.OpenWrite(SFileDialog.FileName);
+            OFS.SetLength(0);
+            OFS.Seek(0, SeekOrigin.Begin);
+            BinaryWriter OSR = new BinaryWriter(OFS);
+
+            for (int f = 0; f < InputFileNames.Length; f++)
+            {
+                byte[] inputline = new byte[4096];
+                FileStream FS = File.OpenRead(InputFileNames[f]);
+                BinaryReader sr = new BinaryReader(FS);
+                //int xx = sr.Read(inputline, 0, 2);
+                //if (xx < 2 || inputline[0] != 255 || inputline[1] != 254)
+                //{
+                //    MessageBox.Show(InputFileNames[f] + " File not 16 Bit UCode File");
+                //    FS.Close();
+                //    OSR.Dispose();
+                //    OFS.Close();
+                //    OFS.Dispose();
+                //    trd.Abort();
+                //    return;
+                //}
+                //OSR.Write(inputline, 0, 2);
+                bool firstline = true;
+                while (true)
+                {
+                    if (firstline == false || f == 0)  // Only need first line header from first file
+                    {
+                        int bts = sr.Read(inputline, 0, 4096);
+                        if (inputline[0] != 255 || inputline[1] != 254)
+                            if (bts <= 0)
+                                break;
+                        numBytes += bts;
+                        OSR.Write(inputline, 0, bts);
+                    }
+                    else
+                    {
+                        int bts = sr.Read(inputline, 0, 4096);
+                        int eol=0;
+                        for(int i=3;i<bts;i++)
+                        {
+
+                            if (inputline[i-3] == 13 && inputline[i-1] == 10 ) // 16 Bit Format
+                            {
+                                eol = i;
+                                numBytes += bts - eol;
+                                OSR.Write(inputline, eol + 1, bts - (eol + 1));
+                                break;
+                            }
+                            else if (inputline[i - 1] == 10 && inputline[i-3] != 13) // 8 Bit Format no leading byte
+                            {
+                                eol = i-1;
+                                numBytes += bts - eol;
+                                OSR.Write(inputline, eol, bts - (eol));
+                                break;
+                            }
+                        }
+                        firstline = false;
+                    }
+                }
+                FS.Close();
+
+                OSR.Flush();
+                OFS.Flush(true);
+            }
+            OSR.Dispose();
+            OFS.Close();
+            OFS.Dispose();
+            
+
+            trd.Abort();
+            lblNumberOfRecords.Text = "Number of Files: " + InputFileNames.Length + " Number of Bytes " + numBytes;
+            MessageBox.Show("Wrote Number of Files: " + InputFileNames.Length + " Number of Bytes " + numBytes);
+        }
+
+        private void btnAddFiles_Click(object sender, EventArgs e)
+        {
+            OFileDialog = new OpenFileDialog();
+            OFileDialog.Multiselect = true;
+            OFileDialog.Title = "Open CSV File";
+            OFileDialog.Filter = "CSV files|*.csv";
+            OFileDialog.InitialDirectory = tbDirectory.Text;
+            OFileDialog.ShowDialog();
+            string[] LocalInputFileNames = OFileDialog.FileNames;
+
+            if (LocalInputFileNames.Length < 1)
+            {
+                MessageBox.Show("Cancelled...");
+                return;
+            }
+            //FileName = InputFileNames[0].Substring(InputFileNames[0].LastIndexOf("\\") + 1,
+            //    (InputFileNames[0].Length - InputFileNames[0].LastIndexOf("\\")) - 1);
+
+            tbDirectory.Text = InputFileNames[0].Substring(0, InputFileNames[0].LastIndexOf("\\") + 1);
+            //                tbDirectoryName.Text + tbWorkItemsFileName.Text
+
+            int olen = InputFileNames.Length;
+            Array.Resize(ref InputFileNames, olen + LocalInputFileNames.Length);
+            for (int i = 0; i < LocalInputFileNames.Length; i++)
+            {
+                lbFileList.Items.Add(LocalInputFileNames[i]);
+                InputFileNames[i + olen] = LocalInputFileNames[i];
+            }
+            return;
+        }
+
+        private void btnMoveUp_Click(object sender, EventArgs e)
+        {
+            if (lbFileList.SelectedIndex < 1 )
+                return;
+            string hstr = "";
+            int idx = lbFileList.SelectedIndex;
+            hstr = InputFileNames[idx];
+            InputFileNames[idx] = InputFileNames[idx-1];
+            InputFileNames[idx - 1] = hstr;
+            lbFileList.Items[idx] = InputFileNames[idx];
+            lbFileList.Items[idx - 1] = InputFileNames[idx - 1];
+            lbFileList.SetSelected(idx - 1,true);
+        }
+
+        private void btnMoveDown_Click(object sender, EventArgs e)
+        {
+            if (lbFileList.SelectedIndex < 0 || lbFileList.SelectedIndex >= (lbFileList.Items.Count-1))
+                return;
+            string hstr = "";
+            int idx = lbFileList.SelectedIndex;
+            hstr = InputFileNames[idx];
+            InputFileNames[idx] = InputFileNames[idx + 1];
+            InputFileNames[idx + 1] = hstr;
+            lbFileList.Items[idx] = InputFileNames[idx];
+            lbFileList.Items[idx + 1] = InputFileNames[idx + 1];
+            lbFileList.SetSelected(idx + 1, true);
         }
     }
 }
