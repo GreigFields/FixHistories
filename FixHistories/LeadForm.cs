@@ -353,7 +353,7 @@ namespace FixHistories
 
             int numBytes = 0;
             int numRecs = 0;
-            if(InputFileNames.Length < 2)
+            if(InputFileNames.Length < 1)
             {
                 MessageBox.Show("Please select 2 or more files first");
                 return;
@@ -364,8 +364,10 @@ namespace FixHistories
             trd.Start();
 
             Array.Resize(ref Histories, 100000);
-            //formLoadStatus.StartPosition = FormStartPosition.CenterParent;
-            //ProjectGlobals.formLoadStatus.Show();
+            ProjectGlobals.formLoadStatus.StartPosition = FormStartPosition.CenterParent;
+            ProjectGlobals.formLoadStatus.Show();
+            int numloaded = 0;
+            int maxx = 355000;
             foreach (string DumpFileName in InputFileNames)
             {
                 //FileStream FS = File.OpenRead(DumpFileName);
@@ -375,12 +377,23 @@ namespace FixHistories
                 HistoriesDumpParser.TextFieldType = FieldType.Delimited;
                 HistoriesDumpParser.SetDelimiters(",");
                 //while (sr.EndOfStream != true)
+                ProjectGlobals.LoadStatus = "Loading " + DumpFileName + " " + (numloaded + 1).ToString() + " of " + InputFileNames.Length ;
+                ProjectGlobals.LoadStatusPct = Convert.ToDouble( .1) ;
+                ProjectGlobals.formLoadStatus.UpdateLoadStatus();
+                int rec = 0;
                 
                 while (HistoriesDumpParser.EndOfData != true)
                 {
                     // inputline = sr.ReadLine();
                     inputline = HistoriesDumpParser.PeekChars(8000);
                     string[] pline = new string[0];
+                    rec++;
+                    if(rec%500 ==  0)
+                    {
+                        ProjectGlobals.LoadStatus = "Loading " + DumpFileName.Substring(DumpFileName.LastIndexOf('\\')+1) + " " + (numloaded + 1).ToString() + " of " + InputFileNames.Length + " Rec " + rec + " (" + maxx.ToString() + ") ";
+                        ProjectGlobals.LoadStatusPct = Convert.ToDouble(rec + 1) / Convert.ToDouble(maxx);
+                        ProjectGlobals.formLoadStatus.UpdateLoadStatus();
+                    }
                     try
                     {
                         pline = HistoriesDumpParser.ReadFields();
@@ -437,9 +450,12 @@ namespace FixHistories
                         }
                     }
                 }
+                numloaded++;
+                maxx = rec;
                 //FS.Close();
                 HistoriesDumpParser.Close();
             }
+            ProjectGlobals.formLoadStatus.Hide();
             Array.Resize(ref Histories, numRecs);
             SortedHistories = MergeHistory(Histories);
             int sort = SortedHistories.Length;
@@ -689,8 +705,16 @@ namespace FixHistories
 
         private void btnDeDuplicate_Click(object sender, EventArgs e)
         {
+            int sort = SortedHistories.Length;
+            SortedHistories = DeDuplicateHistory(SortedHistories);
+            MessageBox.Show("Deduplcate from " + sort + " to " + SortedHistories.Length + " (" + Convert.ToDouble(1 - Convert.ToDouble(SortedHistories.Length) / Convert.ToDouble(sort)).ToString("P") + ")");
+            dtpEndDate.Value = LatestDate(SortedHistories);
+            dtpStartDate.Value = EarliestDate(SortedHistories);
+            StartRec = 0;
+            EndRec = SortedHistories.Length;
 
-           
+            lblNumberOfRecords.Text = "Number of Records: " + (EndRec - StartRec) + " Max - " + MaxRecs;
+
         }
 
         private void LoadAndConcat_Click(object sender, EventArgs e)
@@ -700,7 +724,7 @@ namespace FixHistories
                 MessageBox.Show("Please select multiple files to concatenate");
                 return;
             }
-
+            
             Thread trd = new Thread(new ThreadStart(this.ThreadTask));
             trd.IsBackground = true;
             trd.Start();
@@ -720,69 +744,212 @@ namespace FixHistories
                 trd.Abort();
                 return;
             }
+           
             FileStream OFS = File.OpenWrite(SFileDialog.FileName);
             OFS.SetLength(0);
             OFS.Seek(0, SeekOrigin.Begin);
-            BinaryWriter OSR = new BinaryWriter(OFS);
+            StreamWriter OSR = new StreamWriter(OFS);
 
             for (int f = 0; f < InputFileNames.Length; f++)
             {
-                byte[] inputline = new byte[4096];
+                string ARTName = "";
+                if (cbAddArt.Checked == true)
+                {
+                    int start = InputFileNames[f].LastIndexOf("\\");
+                    int len = InputFileNames[f].IndexOf(" ");
+
+                    ARTName = InputFileNames[f].Substring(start + 1, len - (start + 1));
+                }
+                string inputline = "";
                 FileStream FS = File.OpenRead(InputFileNames[f]);
-                BinaryReader sr = new BinaryReader(FS);
-                //int xx = sr.Read(inputline, 0, 2);
-                //if (xx < 2 || inputline[0] != 255 || inputline[1] != 254)
-                //{
-                //    MessageBox.Show(InputFileNames[f] + " File not 16 Bit UCode File");
-                //    FS.Close();
-                //    OSR.Dispose();
-                //    OFS.Close();
-                //    OFS.Dispose();
-                //    trd.Abort();
-                //    return;
-                //}
-                //OSR.Write(inputline, 0, 2);
+                StreamReader sr = new StreamReader(FS);
                 bool firstline = true;
+                bool linebegin = true;
+                string oline = "";
+                string Astr = "\"ART\"";
+                string sep = "";
                 while (true)
                 {
-                    if (firstline == false || f == 0)  // Only need first line header from first file
+                    int bts = 0;
+                    inputline = sr.ReadLine();
+                    if (inputline == null)
+                        break;
+                    if (sep == "")
                     {
-                        int bts = sr.Read(inputline, 0, 4096);
-                        if (inputline[0] != 255 || inputline[1] != 254)
-                            if (bts <= 0)
-                                break;
-                        numBytes += bts;
-                        OSR.Write(inputline, 0, bts);
-                    }
-                    else
-                    {
-                        int bts = sr.Read(inputline, 0, 4096);
-                        int eol=0;
-                        for(int i=3;i<bts;i++)
+                        for(int s=0;s<inputline.Length;s++)
                         {
-
-                            if (inputline[i-3] == 13 && inputline[i-1] == 10 ) // 16 Bit Format
+                            if (inputline.Substring(s, 1) == "\t") 
                             {
-                                eol = i;
-                                numBytes += bts - eol;
-                                OSR.Write(inputline, eol + 1, bts - (eol + 1));
+                                sep = "\t";
                                 break;
                             }
-                            else if (inputline[i - 1] == 10 && inputline[i-3] != 13) // 8 Bit Format no leading byte
+                            if(inputline.Substring(s,1) == ",")
                             {
-                                eol = i-1;
-                                numBytes += bts - eol;
-                                OSR.Write(inputline, eol, bts - (eol));
+                                sep = ",";
                                 break;
                             }
                         }
+                    }
+                    
+                    bts = inputline.Length;
+                    if (firstline == true)  // Only need first line header from first file
+                    {
+                        if (f == 0)
+                        {
+                            
+                            if (inputline[0] != 255 || inputline[1] != 254)
+                                if (bts <= 0)
+                                    break;
+                            //numBytes = 0;
+                            numBytes += bts;
+                            if (cbAddArt.Checked == true)
+                            {
+                                int esclen = 0;
+                                for (int ee = 0; ee < inputline.Length; ee++)
+                                {
+                                    if (inputline[ee] == Convert.ToByte(34))
+                                    {
+                                        break;
+                                    }
+                                    esclen++;
+                                }
+                                byte[] esc = new byte[esclen];
+
+                                byte[] head = new byte[Astr.Length + esclen];
+                                for (int b = 0; b < esc.Length; b++)
+                                    head[b] = Convert.ToByte(inputline[b]);
+                                
+                                for (int b = esclen; b < head.Length; b++)
+                                    head[b] = Convert.ToByte(Astr[b - esclen]);
+
+
+                                bts += Astr.Length + 1;
+                                inputline = Astr + sep + inputline;
+                                
+                            }
+                            OSR.WriteLine(inputline);
+                        }
                         firstline = false;
+                    }
+                    else
+                    {
+                        if (cbAddArt.Checked == true)
+                        {
+                            inputline = ARTName + sep + inputline;
+                        }
+                        OSR.WriteLine(inputline);
+                        numBytes += inputline.Length;
                     }
                 }
                 FS.Close();
 
                 OSR.Flush();
                 OFS.Flush(true);
+                if (false)
+                {
+                    //    byte[] inputline = new byte[65535];
+                    //    FileStream FS = File.OpenRead(InputFileNames[f]);
+                    //    BinaryReader sr = new BinaryReader(FS);
+
+                    //    bool firstline = true;
+                    //    bool linebegin = true;
+                    //    byte[] oline = new byte[4101];
+                    //    string Astr = "\"ART\",";
+                    //    while (true)
+                    //    {
+                    //        if (firstline == true)  // Only need first line header from first file
+                    //        {
+                    //            if (f == 0)
+                    //            {
+                    //                int bts = sr.Read(inputline, 0, 65535);
+                    //                if (inputline[0] != 255 || inputline[1] != 254)
+                    //                    if (bts <= 0)
+                    //                        break;
+                    //                //numBytes = 0;
+                    //                numBytes += bts;
+                    //                if (cbAddArt.Checked == true)
+                    //                {
+                    //                    int esclen = 0;
+                    //                    for (int ee = 0; ee < inputline.Length; ee++)
+                    //                    {
+                    //                        if (inputline[ee] == Convert.ToByte(34))
+                    //                        {
+                    //                            break;
+                    //                        }
+                    //                        esclen++;
+                    //                    }
+                    //                    byte[] esc = new byte[esclen];
+
+                    //                    byte[] head = new byte[Astr.Length + esclen];
+                    //                    for (int b = 0; b < esc.Length; b++)
+                    //                        head[b] = Convert.ToByte(inputline[b]);
+                    //                    for (int b = esclen; b < head.Length; b++)
+                    //                        head[b] = Convert.ToByte(Astr[b - esclen]);
+
+
+                    //                    bts += Astr.Length;
+                    //                    Array.Resize(ref inputline, inputline.Length + Astr.Length);
+                    //                    for (int b = inputline.Length - 1; b >= (head.Length); b--)
+                    //                        inputline[b] = inputline[b - (Astr.Length)];
+                    //                    Array.Copy(head, 0, inputline, 0, head.Length);
+                    //                }
+                    //                OSR.Write(inputline, 0, bts);
+                    //            }
+                    //            firstline = false;
+                    //        }
+                    //        else
+                    //        {
+                    //            int bts = sr.Read(inputline, 0, 4096);
+                    //            int eol = 0;
+                    //            if (cbAddArt.Checked == true && linebegin == true && bts > 0)
+                    //            {
+
+                    //                byte[] head = new byte[ARTName.Length];
+                    //                for (int b = 0; b < head.Length; b++)
+                    //                    head[b] = Convert.ToByte(Astr[b]);
+
+
+                    //                bts += Astr.Length;
+
+                    //                oline = new byte[bts + Astr.Length];
+                    //                for (int b = oline.Length - 1; b >= (head.Length); b--)
+                    //                    oline[b] = oline[b - (ARTName.Length)];
+                    //                Array.Copy(head, 0, oline, 0, head.Length);
+                    //                linebegin = false;
+                    //            }
+                    //            else
+                    //            {
+                    //                oline = inputline;
+                    //            }
+                    //            for (int i = 3; i < bts; i++)
+                    //            {
+
+                    //                if (oline[i - 3] == 13 && oline[i - 1] == 10) // 16 Bit Format
+                    //                {
+                    //                    eol = i;
+                    //                    numBytes += bts - eol;
+                    //                    OSR.Write(oline, eol + 1, bts - (eol + 1));
+                    //                    break;
+                    //                }
+                    //                else if (oline[i - 1] == 10 && oline[i - 3] != 13) // 8 Bit Format no leading byte
+                    //                {
+                    //                    eol = i - 1;
+                    //                    numBytes += bts - eol;
+                    //                    OSR.Write(oline, eol, bts - (eol));
+                    //                    break;
+                    //                }
+                    //            }
+                    //            firstline = false;
+                    //            if (bts == 0)
+                    //                break;
+                    //        }
+                    //    }
+                    //    FS.Close();
+
+                    //    OSR.Flush();
+                    //    OFS.Flush(true);
+                    //}
+                }
             }
             OSR.Dispose();
             OFS.Close();
@@ -851,6 +1018,118 @@ namespace FixHistories
             lbFileList.Items[idx] = InputFileNames[idx];
             lbFileList.Items[idx + 1] = InputFileNames[idx + 1];
             lbFileList.SetSelected(idx + 1, true);
+        }
+
+        private void btnLoadConcatTabFiles_Click(object sender, EventArgs e)
+        {
+            if (InputFileNames.Length < 2)
+            {
+                MessageBox.Show("Please select multiple files to concatenate");
+                return;
+            }
+
+            Thread trd = new Thread(new ThreadStart(this.ThreadTask));
+            trd.IsBackground = true;
+            trd.Start();
+            int numBytes = 0;
+
+
+
+            SFileDialog = new SaveFileDialog();
+            SFileDialog.Title = "Open CSV File";
+            SFileDialog.Filter = "CSV files|*.csv";
+            SFileDialog.CheckPathExists = false;
+            SFileDialog.InitialDirectory = tbDirectory.Text;
+            SFileDialog.ShowDialog();
+            if (SFileDialog.FileName.Length == 0)
+            {
+                MessageBox.Show("Cancelled");
+                trd.Abort();
+                return;
+            }
+
+            FileStream OFS = File.OpenWrite(SFileDialog.FileName);
+            OFS.SetLength(0);
+            OFS.Seek(0, SeekOrigin.Begin);
+            BinaryWriter OSR = new BinaryWriter(OFS);
+
+            for (int f = 0; f < InputFileNames.Length; f++)
+            {
+
+
+
+                byte[] inputline = new byte[4096];
+                FileStream FS = File.OpenRead(InputFileNames[f]);
+                BinaryReader sr = new BinaryReader(FS);
+
+                bool firstline = true;
+
+                byte[] oline = new byte[4101];
+
+                while (true)
+                {
+                    if (firstline == true && f == 0)  // Only need first line header from first file
+                    {
+                        
+                        int bts = sr.Read(inputline, 0, 4096);
+
+                        OSR.Write(inputline, 0, bts);
+                        numBytes += bts;
+                        firstline = false;
+                    }
+                    else
+                    {
+                        int bts = sr.Read(inputline, 0, 4096);
+                        if(bts == 0 )
+                        {
+                            break;
+                        }
+                        int eol = 0;
+                        
+                        oline = inputline;
+                        if (firstline == true)
+                        {
+                            for (int i = 3; i < bts; i++)  // Find the en of the first line and write starting from th
+                            {
+
+                                if (oline[i - 3] == 13 && oline[i - 1] == 10) // 16 Bit Format
+                                {
+                                    eol = i;
+                                    numBytes += bts - eol;
+                                    OSR.Write(oline, eol + 1, bts - (eol + 1));
+                                    break;
+                                }
+                                else if (oline[i - 1] == 10 && oline[i - 3] != 13) // 8 Bit Format no leading byte
+                                {
+                                    eol = i - 1;
+                                    numBytes += bts - eol;
+                                    OSR.Write(oline, eol, bts - (eol));
+                                    break;
+                                }
+                            }
+                            firstline = false;
+                        }
+                        else
+                        {
+                            OSR.Write(oline, 0, bts);
+                            numBytes += bts;
+                        }
+                    }
+                }
+                FS.Close();
+
+                OSR.Flush();
+                OFS.Flush(true);
+
+            }
+            OSR.Dispose();
+            OFS.Close();
+            OFS.Dispose();
+
+
+            trd.Abort();
+            lblNumberOfRecords.Text = "Number of Files: " + InputFileNames.Length + " Number of Bytes " + numBytes;
+            MessageBox.Show("Wrote Number of Files: " + InputFileNames.Length + " Number of Bytes " + numBytes);
         }
     }
 }

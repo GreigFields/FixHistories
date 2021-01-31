@@ -83,6 +83,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="frmLoadStatus.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmLoadStatus.Designer.cs">
+      <DependentUpon>frmLoadStatus.cs</DependentUpon>
+    </Compile>
     <Compile Include="LeadForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -90,7 +96,11 @@
       <DependentUpon>LeadForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="ProjectGlobals.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="frmLoadStatus.resx">
+      <DependentUpon>frmLoadStatus.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="LeadForm.resx">
       <DependentUpon>LeadForm.cs</DependentUpon>
     </EmbeddedResource>

@@ -47,6 +47,8 @@
             this.btnAddFiles = new System.Windows.Forms.Button();
             this.btnMoveUp = new System.Windows.Forms.Button();
             this.btnMoveDown = new System.Windows.Forms.Button();
+            this.cbAddArt = new System.Windows.Forms.CheckBox();
+            this.btnLoadConcatTabFiles = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // lbFileList
@@ -195,12 +197,12 @@
             // 
             // LoadAndConcat
             // 
-            this.LoadAndConcat.Location = new System.Drawing.Point(166, 308);
+            this.LoadAndConcat.Location = new System.Drawing.Point(183, 208);
             this.LoadAndConcat.Margin = new System.Windows.Forms.Padding(2);
             this.LoadAndConcat.Name = "LoadAndConcat";
             this.LoadAndConcat.Size = new System.Drawing.Size(150, 36);
             this.LoadAndConcat.TabIndex = 15;
-            this.LoadAndConcat.Text = "Load && Concat Files";
+            this.LoadAndConcat.Text = "Load && Concat Comma Files";
             this.LoadAndConcat.UseVisualStyleBackColor = true;
             this.LoadAndConcat.Click += new System.EventHandler(this.LoadAndConcat_Click);
             // 
@@ -237,11 +239,34 @@
             this.btnMoveDown.UseVisualStyleBackColor = true;
             this.btnMoveDown.Click += new System.EventHandler(this.btnMoveDown_Click);
             // 
+            // cbAddArt
+            // 
+            this.cbAddArt.AutoSize = true;
+            this.cbAddArt.Location = new System.Drawing.Point(338, 210);
+            this.cbAddArt.Name = "cbAddArt";
+            this.cbAddArt.Size = new System.Drawing.Size(61, 17);
+            this.cbAddArt.TabIndex = 19;
+            this.cbAddArt.Text = "Add Art";
+            this.cbAddArt.UseVisualStyleBackColor = true;
+            // 
+            // btnLoadConcatTabFiles
+            // 
+            this.btnLoadConcatTabFiles.Location = new System.Drawing.Point(183, 265);
+            this.btnLoadConcatTabFiles.Margin = new System.Windows.Forms.Padding(2);
+            this.btnLoadConcatTabFiles.Name = "btnLoadConcatTabFiles";
+            this.btnLoadConcatTabFiles.Size = new System.Drawing.Size(150, 36);
+            this.btnLoadConcatTabFiles.TabIndex = 20;
+            this.btnLoadConcatTabFiles.Text = "Load && Concat Tab Files";
+            this.btnLoadConcatTabFiles.UseVisualStyleBackColor = true;
+            this.btnLoadConcatTabFiles.Click += new System.EventHandler(this.btnLoadConcatTabFiles_Click);
+            // 
             // LeadForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(723, 485);
+            this.Controls.Add(this.btnLoadConcatTabFiles);
+            this.Controls.Add(this.cbAddArt);
             this.Controls.Add(this.btnMoveDown);
             this.Controls.Add(this.btnMoveUp);
             this.Controls.Add(this.btnAddFiles);
@@ -290,6 +315,8 @@
         private System.Windows.Forms.Button btnAddFiles;
         private System.Windows.Forms.Button btnMoveUp;
         private System.Windows.Forms.Button btnMoveDown;
+        private System.Windows.Forms.CheckBox cbAddArt;
+        private System.Windows.Forms.Button btnLoadConcatTabFiles;
     }
 }
 
